@@ -7,12 +7,21 @@ param (
 
 function Set-MailboxComboList {
     param (
-        $ComboBox
+        $mailboxCombo
     )
     foreach ($mailbox in $mailboxes){
-        $ComboBox.Items.Add($mailbox.PrimarySmtpAddress)
+        $mailboxCombo.Items.Add($mailbox.DisplayName)
     }
     
+}
+
+function Set-FolderCombo {
+    param (
+        $folderCombo
+    )
+    $folderCombo.Items.Add("Inbox")
+    $folderCombo.Items.Add("Calendar")
+    $folderCombo.Items.Add("Contacts")
 }
 
 Add-Type -assembly System.Windows.Forms
@@ -33,37 +42,44 @@ If ($isconnected -ne "True") {
 
 $mailboxes = Get-EXOMailbox -ResultSize unlimited -Properties Name,DistinguishedName,Guid,DisplayName
 
-$ComboBox = New-Object System.Windows.Forms.ComboBox
-$ComboBox.Width = 300
-$ComboBox.Location = New-Object System.Drawing.Point(60,10)
-Set-MailboxComboList($ComboBox)
+$mailboxCombo = New-Object System.Windows.Forms.ComboBox
+$mailboxCombo.Width = 300
+$mailboxCombo.Location = New-Object System.Drawing.Point(60,10)
+Set-MailboxComboList($mailboxCombo)
+
+$folderCombo = New-Object System.Windows.Forms.ComboBox
+$folderCombo.Width = 300
+$folderCombo.Location = New-Object System.Drawing.Point(60,40)
+Set-FolderCombo($folderCombo)
 
 $Label2 = New-Object System.Windows.Forms.Label
-$Label2.Text = "Folder List"
-$Label2.Location = New-Object System.Drawing.Point(0,40)
+$Label2.Text = "Folder Permissions"
+$Label2.Location = New-Object System.Drawing.Point(0,70)
 $Label2.AutoSize = $true
 
 $Label3 = New-Object System.Windows.Forms.Label
 $Label3.Text = ""
-$Label3.Location = New-Object System.Drawing.Point(110,40)
+$Label3.Location = New-Object System.Drawing.Point(10,90)
 $Label3.AutoSize = $true
 
 
 $FolderListButton = New-Object System.Windows.Forms.Button
 $FolderListButton.Location = New-Object System.Drawing.Size(400,10)
-$FolderListButton.Size = New-Object System.Drawing.Size(120,23)
-$FolderListButton.Text = "Get Folders"
+$FolderListButton.Size = New-Object System.Drawing.Size(130,23)
+$FolderListButton.Text = "Get Folder Permissions"
 
 $FolderListButton.Add_Click(
     {
-        $Label3.Text = Get-MailboxFolder -Identity $ComboBox.SelectedItem -GetChildren
+        $identityPath = $mailboxCombo.SelectedItem + ":\" + $folderCombo.SelectedItem
+        $OutputObject = Get-MailboxFolderPermission -Identity $identityPath | Out-String
+        $Label3.Text = $OutputObject
     }
 )
 
 if ($GetMailboxes.IsPresent){
     foreach ($mailbox in $mailboxes){
         Write-Host $mailbox.DisplayName
-        Set-MailboxComboList($ComboBox)
+        Set-MailboxComboList($mailboxCombo)
     }
 }
 
@@ -94,5 +110,6 @@ if ($GetMailboxFolders.IsPresent){
 $main_form.Controls.Add($Label2)
 $main_form.Controls.Add($Label3)
 $main_form.Controls.Add($FolderListButton)
-$main_form.Controls.Add($ComboBox)
+$main_form.Controls.Add($mailboxCombo)
+$main_form.Controls.Add($folderCombo)
 $main_form.ShowDialog()
