@@ -2,7 +2,10 @@ param (
     [Parameter()][switch]$GetMailboxes,
     [Parameter()][switch]$GetMailboxPermission,
     [Parameter()][switch]$GetMailboxFolders,
-    [Parameter()][string]$Identity
+    [Parameter()][switch]$GetMailboxFolderPermission,
+    [Parameter()][string]$Identity,
+    [Parameter()][string]$User,
+    [Parameter()][string]$AccessRights
 )
 
 $getsessions = Get-PSSession | Select-Object -Property State, Name
@@ -44,3 +47,4 @@ if ($GetMailboxFolders.IsPresent){
         }
     }
 }
+
